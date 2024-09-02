@@ -5,7 +5,8 @@ source("code/sprint_fun.R")
 
 dengue <- read_csv("~/Dropbox/Research/Mosqlimate/Sprint/data/dengue.csv.gz")
 
-selufs <- c('AM', 'CE', 'GO', 'GO', 'MG', 'PR')
+# selufs <- c('AM', 'CE', 'GO', 'GO', 'MG', 'PR')
+selufs <- sort(unique(dengue$uf))
 
 dengue <- dengue %>% 
   filter(uf %in% selufs)
@@ -236,7 +237,7 @@ tbl.total.uf.week.train2 <- df.train.2 %>%
       summarise(cases = sum(casos)), by = c("uf", "week")
   ) %>%  
   left_join(dt_train2)
-  # bind_rows(
+# bind_rows(
   #   tibble(uf = "BR") %>% 
   #     bind_cols(df.train.2 %>% 
   #                 group_by(week, samples) %>% 
@@ -260,8 +261,29 @@ tbl.total.uf.week.train2 <- df.train.2 %>%
   # )
 
 
-write_csv(tbl.total.uf.train1, file = "~/Desktop/tbl.total.uf.train1.csv")
-write_csv(tbl.total.uf.train2, file = "~/Desktop/tbl.total.uf.train2.csv")
+tbl.total.uf.week.train2 <- df.train.2 %>% 
+  group_by(uf, week, samples) %>% 
+  summarise(
+    values = sum(values)
+  ) %>% group_by(uf, week) %>% 
+  summarise(
+    est = median(values),
+    li = quantile(values, probs = 0.05),
+    lu = quantile(values, probs = 0.95),
+  ) %>% left_join(
+    dengue %>% 
+      filter(target_2 == T) %>% 
+      mutate(
+        week = week.season(date)
+      ) %>% 
+      group_by(uf, week) %>% 
+      summarise(cases = sum(casos)), by = c("uf", "week")
+  ) %>%  
+  left_join(dt_train2)
+
+
+# write_csv(tbl.total.uf.train1, file = "~/Desktop/tbl.total.uf.train1.csv")
+# write_csv(tbl.total.uf.train2, file = "~/Desktop/tbl.total.uf.train2.csv")
 write_csv(tbl.total.uf.week.train1, file = "~/Desktop/tbl.total.uf.week.train1.csv")
 write_csv(tbl.total.uf.week.train2, file = "~/Desktop/tbl.total.uf.week.train2.csv")
 
